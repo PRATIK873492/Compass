@@ -1,0 +1,182 @@
+{
+  "synthetic": true,
+  "dataset": {
+    "file": "data/startups_synthetic.csv",
+    "rows": 6000,
+    "columns": 17,
+    "generated_failure_rate": 0.32,
+    "train_rows": 4800,
+    "test_rows": 1200,
+    "train_failure_rate": 0.32,
+    "test_failure_rate": 0.32,
+    "random_seed": 42
+  },
+  "cross_validation": {
+    "folds": 5,
+    "training_split_only": true,
+    "metrics": {
+      "Logistic Regression": {
+        "roc_auc_mean": 0.8909398866227758,
+        "roc_auc_std": 0.005108713867586971,
+        "pr_auc_mean": 0.7821260980798568,
+        "pr_auc_std": 0.007792441565556342,
+        "f1_mean": 0.7159921233449813,
+        "f1_std": 0.013900702021419431,
+        "recall_mean": 0.8287702525487542,
+        "recall_std": 0.009505770981499437,
+        "brier_mean": 0.13813667124283374,
+        "brier_std": 0.0059942083728791165
+      },
+      "Random Forest": {
+        "roc_auc_mean": 0.8793561144780435,
+        "roc_auc_std": 0.004434891757996995,
+        "pr_auc_mean": 0.758439119134805,
+        "pr_auc_std": 0.019581662237651246,
+        "f1_mean": 0.7089732682576155,
+        "f1_std": 0.008136711266426327,
+        "recall_mean": 0.7805935107238039,
+        "recall_std": 0.009248838070469643,
+        "brier_mean": 0.1419655826926914,
+        "brier_std": 0.0031072885816553065
+      },
+      "HistGradientBoosting": {
+        "roc_auc_mean": 0.874196152412912,
+        "roc_auc_std": 0.0049573286441329245,
+        "pr_auc_mean": 0.745360994586825,
+        "pr_auc_std": 0.011305547550538066,
+        "f1_mean": 0.6789490103643849,
+        "f1_std": 0.012562385900096638,
+        "recall_mean": 0.6607999492364313,
+        "recall_std": 0.01536347176267187,
+        "brier_mean": 0.1384699328063183,
+        "brier_std": 0.004269843093399763
+      }
+    }
+  },
+  "selection": {
+    "selected_model": "Logistic Regression",
+    "rule": "Highest mean CV ROC-AUC; prefer the simpler model when within 0.01.",
+    "explanation": "Logistic Regression had the highest mean cross-validation ROC-AUC (0.8909)."
+  },
+  "calibration": {
+    "method": "isotonic",
+    "folds": 5,
+    "decision_threshold_for_reported_class_metrics": 0.5
+  },
+  "test_metrics": {
+    "roc_auc": 0.899911917892157,
+    "pr_auc": 0.8073317612297074,
+    "f1": 0.7194630872483222,
+    "precision": 0.7423822714681441,
+    "recall": 0.6979166666666666,
+    "brier": 0.11934233776210078,
+    "accuracy": 0.8258333333333333
+  },
+  "top_permutation_importance": [
+    {
+      "feature": "runway_months",
+      "importance_mean": 0.1893988715277779,
+      "importance_std": 0.01288709744590619
+    },
+    {
+      "feature": "ltv_cac_ratio",
+      "importance_mean": 0.17029813878676484,
+      "importance_std": 0.008036396596630467
+    },
+    {
+      "feature": "mrr_growth_pct",
+      "importance_mean": 0.015187780841503318,
+      "importance_std": 0.0033597314137885016
+    },
+    {
+      "feature": "founder_experience_yrs",
+      "importance_mean": 0.01057846966911773,
+      "importance_std": 0.0017878907203183378
+    },
+    {
+      "feature": "monthly_churn_pct",
+      "importance_mean": 0.0073988970588236835,
+      "importance_std": 0.0008821090614224228
+    },
+    {
+      "feature": "cash_balance",
+      "importance_mean": 0.0046511182598040655,
+      "importance_std": 0.0010746911904213957
+    },
+    {
+      "feature": "revenue_cover",
+      "importance_mean": 0.0037412556168301856,
+      "importance_std": 0.0009604823863641741
+    },
+    {
+      "feature": "cac",
+      "importance_mean": 0.0037326388888889728,
+      "importance_std": 0.0013359622097651978
+    },
+    {
+      "feature": "ltv",
+      "importance_mean": 0.001507289113562149,
+      "importance_std": 0.00030795021499168123
+    },
+    {
+      "feature": "prior_rounds",
+      "importance_mean": 0.0011916615604575576,
+      "importance_std": 0.0010629158790740377
+    },
+    {
+      "feature": "total_funding_raised",
+      "importance_mean": 0.0010177313112746055,
+      "importance_std": 0.001048243672286123
+    },
+    {
+      "feature": "sector",
+      "importance_mean": 0.00033573325163409605,
+      "importance_std": 0.0008006617716249153
+    },
+    {
+      "feature": "is_profitable",
+      "importance_mean": -4.787071078293792e-06,
+      "importance_std": 2.7248486272115345e-05
+    },
+    {
+      "feature": "months_operating",
+      "importance_mean": -2.489276960773168e-05,
+      "importance_std": 0.00042478056624893146
+    },
+    {
+      "feature": "net_burn",
+      "importance_mean": -5.5849162581611544e-05,
+      "importance_std": 0.0002323973870013554
+    },
+    {
+      "feature": "stage",
+      "importance_mean": -8.457158905215146e-05,
+      "importance_std": 0.0002612783998813956
+    },
+    {
+      "feature": "team_size",
+      "importance_mean": -0.00010403901143780647,
+      "importance_std": 0.0002901760176594993
+    },
+    {
+      "feature": "monthly_burn",
+      "importance_mean": -0.00024286407271227882,
+      "importance_std": 0.00031240406133808317
+    },
+    {
+      "feature": "gross_margin_pct",
+      "importance_mean": -0.00034786049836592613,
+      "importance_std": 0.0003237906997776296
+    },
+    {
+      "feature": "burn_per_head",
+      "importance_mean": -0.00043179381127440576,
+      "importance_std": 0.0001908477690208697
+    }
+  ],
+  "limitations": [
+    "All records and outcomes are SYNTHETIC; these scores do not estimate real-world startup failure rates.",
+    "Calibration and test metrics measure fit to the generated labels, not performance on external companies.",
+    "Outputs are decision-support probabilities, never guarantees."
+  ]
+}

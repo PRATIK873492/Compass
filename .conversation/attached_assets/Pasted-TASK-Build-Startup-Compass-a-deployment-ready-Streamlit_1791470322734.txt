@@ -1,0 +1,59 @@
+TASK
+Build "Startup Compass", a deployment-ready Streamlit platform that predicts 24-month startup failure risk and funding readiness, for AVENIR Hackathon 4.0 (StartupSpark AI). Output every file in full: no pseudo-code, no "unchanged", no placeholders. Free/open-source only, no API keys, no LLM calls. Money is in INR lakh. Python 3.11.
+
+HARD RULES
+1. Run every step and show real terminal output. Never invent a metric. If you cannot run code, say so and list the commands I must run.
+2. Label data as SYNTHETIC in code comments, the app UI (persistent banner), README and metrics.json.
+3. Outputs are probabilities for decision support, never guarantees.
+4. Pin requirements.txt to the versions you actually installed and tested (pip freeze of only the needed packages): pandas, numpy, scikit-learn, joblib, streamlit, plotly, pytest.
+5. One shared feature function used by training AND inference.
+
+FILES (build in this order, each runnable on its own)
+src/data_generation.py   generate(n=6000, seed=42) -> DataFrame; CLI saves data/startups_synthetic.csv
+src/features.py          add_features(df), FEATURES, NUM_RAW, CAT lists
+src/train_model.py       trains, evaluates, calibrates, saves models/model.joblib + models/metrics.json + reports/*.png
+src/predict.py           validate_input(), predict_one(), predict_batch()
+src/explain.py           contributions(), global_importance()
+src/benchmark.py         percentile(), peer_table()
+src/scoring.py           readiness_score(), action_plan(), runway_forecast()
+app.py                   Overview page + shared CSS/layout helpers
+pages/1_Analyze.py  2_What_If.py  3_Peer_Benchmark.py  4_Batch_Screening.py  5_Model_and_Data.py
+tests/test_pipeline.py
+requirements.txt  README.md  .gitignore  .streamlit/config.toml
+Commit data/startups_synthetic.csv and models/ so the app runs with no retraining.
+
+DATA SCHEMA (columns, exact names)
+startup_id, sector (SaaS, Fintech, Edtech, Healthtech, D2C, Agritech, Deeptech), stage (Pre-seed, Seed, Series A), team_size int, months_operating, founder_experience_yrs, monthly_burn, cash_balance, mrr, mrr_growth_pct (MoM %), gross_margin_pct, monthly_churn_pct, cac, ltv, total_funding_raised, prior_rounds int, failed_within_24m (0/1 target).
+Generation logic: net_burn = burn - mrr*GM/100; runway = cash/net_burn; ltv = ARPU*GM/churn; latent risk z from runway, churn, growth, LTV:CAC, founder experience, prior rounds, plus Normal noise; threshold at the 68th percentile so failure rate is about 32%. Inject 4-8% NaN into founder_experience_yrs, cac, ltv, monthly_churn_pct, gross_margin_pct and 25 burn outliers (x10).
+Engineered features: net_burn (clip >= 0.05), runway_months (cap 60), ltv_cac_ratio (clip 0-15), burn_multiple (clip 0-60), revenue_cover (clip 0-3), burn_per_head, is_profitable.
+
+MODEL SPEC
+Pipeline: ColumnTransformer = numeric [SimpleImputer(median, add_indicator=True), StandardScaler] + categorical [OneHotEncoder(handle_unknown="ignore")]. Winsorise to train 1st/99th percentiles (fit on train only, stored in the artifact).
+Split: 80/20 stratified, random_state=42; the test set is evaluated once at the end.
+Compare via StratifiedKFold(5): LogisticRegression(max_iter=2000, class_weight="balanced"), RandomForest(300 trees, min_samples_leaf=5), HistGradientBoostingClassifier. Table columns: ROC-AUC, PR-AUC, F1, recall (class 1), Brier, as mean +/- std.
+Choose the final model by CV ROC-AUC; if within 0.01 of a simpler model, take the simpler one and say why. Wrap it in CalibratedClassifierCV(method="isotonic", cv=5), plot the calibration curve, report test-set metrics, and save everything with joblib.
+Explainability: permutation_importance on the test set (global). Per-prediction: for each raw input field, replace it with the training median (mode for categoricals), recompute, and report the probability delta; group fields into Runway, Unit Economics, Growth, Retention, Team and Traction, Funding History. Positive delta = increases risk.
+
+INFERENCE SPEC
+validate_input(d) -> (clean_dict, errors list). Ranges: team_size 1-1000; months_operating 0-240; founder_experience_yrs 0-50; monthly_burn 0.01-100000; cash_balance 0-1000000; mrr 0-100000; mrr_growth_pct -50-200; gross_margin_pct -100-100; monthly_churn_pct 0-100; cac, ltv >= 0; total_funding_raised >= 0; prior_rounds 0-15; sector and stage must be in the allowed lists. Non-numeric or negative values return a clear error string, never an exception. Optional fields (founder_experience_yrs, gross_margin_pct, monthly_churn_pct, cac, ltv) may be blank (NaN) and are imputed; the response flags "n fields missing, lower confidence".
+predict_one(d) returns: probability (0-1), band (Low <0.25, Medium 0.25-0.50, High >0.50), readiness_score (0-100), subscores dict, top_negative (3), top_positive (3) as plain-English sentences with metric values, runway_months, warnings list.
+predict_batch(df) returns the DataFrame with probability, band, readiness_score, runway_months, error column for bad rows (do not drop silently).
+readiness_score = 100 * (0.25*runway_s + 0.25*unit_econ_s + 0.20*growth_s + 0.15*retention_s + 0.15*traction_s - 0.10*risk penalty, clipped 0-100), each sub-score 0-100 from documented linear ramps (e.g. runway_s = min(runway/18,1)*100, unit_econ_s = min(ltv_cac/3,1)*100, retention_s = max(0, 100 - churn*8)). Document the formula in README.
+action_plan(d): candidate actions (cut burn 15%, cut churn by 30%, raise growth +3 pts, cut CAC 20%, extend runway via +6 months cash); re-run the model for each, return the actual risk reduction in percentage points, sorted by impact.
+runway_forecast(d, months=24): month-by-month cash under current net burn and under the best action scenario; mark the cash-out month.
+
+APP SPEC
+Design: dark navy background (#0B1220), card surface #111A2E, accent indigo #6366F1, risk colors used only for risk (green #22C55E, amber #F59E0B, red #EF4444), Inter font via CSS, rounded cards, a KPI row, a plotly gauge for risk. Persistent banner: "Demo uses SYNTHETIC data. Decision support, not a guarantee."
+Pages: Overview (problem, how it works, 3 KPI cards, demo buttons); Analyze (sidebar form, 3 one-click demos: Healthy, Struggling, High-growth-high-burn; shows gauge, readiness score, sub-score radar, drivers, runway chart, action plan table); What-If (sliders for burn, churn, growth, CAC; live risk and delta vs baseline); Peer Benchmark (percentile bars vs same sector+stage); Batch Screening (CSV upload, template download, ranked table, band counts, download results); Model and Data (CV table, test metrics, calibration plot, permutation importance, dataset summary, limitations).
+Use st.session_state to share the current startup across pages, @st.cache_resource for the model and @st.cache_data for the dataset. Show friendly st.error messages for validation errors; never a traceback.
+
+TESTS (pytest, all must pass)
+normal input returns prob in [0,1]; each missing optional field still predicts; non-numeric, negative and out-of-range inputs return errors; extremes (cash 0, burn x1000, churn 100) do not crash; archetype ordering risk(healthy) < risk(high_burn) < risk(struggling); lowering churn never raises risk across 50 random startups; batch CSV with 2 bad rows returns the error column and still scores the others; predict_one output keys are complete.
+
+ACCEPTANCE CHECKLIST (verify and print at the end)
+[ ] pytest all green  [ ] streamlit run app.py starts with no errors  [ ] first page load under 3 s  [ ] all 6 pages open  [ ] metrics.json exists and the UI numbers match it  [ ] no hard-coded metrics  [ ] repo has no secrets
+
+FINISH WITH
+Exact commands: setup (python -m venv, pip install -r requirements.txt), python src/data_generation.py, python src/train_model.py, pytest -q, streamlit run app.py. Then GitHub (git init, add, commit, remote add, push) and Streamlit Community Cloud deployment (New app, repo, branch main, main file app.py, Python 3.11). Fallback if deployment fails: run locally and record the demo video. Add a short honest note on what synthetic-data metrics do and don't prove.
+
+START with src/data_generation.py and stop after the training evaluation table so I can review it before the app is built.
