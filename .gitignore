@@ -53,3 +53,6 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Streamlit secrets (never commit)
+.streamlit/secrets.toml

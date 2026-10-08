@@ -1,7 +1,7 @@
 {
   "synthetic": true,
   "dataset": {
-    "file": "data/startups_synthetic.csv",
+    "file": "data\\startups_synthetic.csv",
     "rows": 6000,
     "columns": 17,
     "generated_failure_rate": 0.32,
@@ -24,8 +24,8 @@
         "f1_std": 0.013900702021419431,
         "recall_mean": 0.8287702525487542,
         "recall_std": 0.009505770981499437,
-        "brier_mean": 0.13813667124283374,
-        "brier_std": 0.0059942083728791165
+        "brier_mean": 0.13813667124273601,
+        "brier_std": 0.005994208373020731
       },
       "Random Forest": {
         "roc_auc_mean": 0.8793561144780435,
@@ -37,7 +37,7 @@
         "recall_mean": 0.7805935107238039,
         "recall_std": 0.009248838070469643,
         "brier_mean": 0.1419655826926914,
-        "brier_std": 0.0031072885816553065
+        "brier_std": 0.0031072885816553083
       },
       "HistGradientBoosting": {
         "roc_auc_mean": 0.874196152412912,
@@ -69,7 +69,7 @@
     "f1": 0.7194630872483222,
     "precision": 0.7423822714681441,
     "recall": 0.6979166666666666,
-    "brier": 0.11934233776210078,
+    "brier": 0.11934233776210235,
     "accuracy": 0.8258333333333333
   },
   "top_permutation_importance": [
@@ -172,6 +172,182 @@
       "feature": "burn_per_head",
       "importance_mean": -0.00043179381127440576,
       "importance_std": 0.0001908477690208697
+    }
+  ],
+  "permutation_importance": [
+    {
+      "feature": "runway_months",
+      "importance_mean": 0.1893988715277779,
+      "importance_std": 0.01288709744590619
+    },
+    {
+      "feature": "ltv_cac_ratio",
+      "importance_mean": 0.17029813878676484,
+      "importance_std": 0.008036396596630467
+    },
+    {
+      "feature": "mrr_growth_pct",
+      "importance_mean": 0.015187780841503318,
+      "importance_std": 0.0033597314137885016
+    },
+    {
+      "feature": "founder_experience_yrs",
+      "importance_mean": 0.01057846966911773,
+      "importance_std": 0.0017878907203183378
+    },
+    {
+      "feature": "monthly_churn_pct",
+      "importance_mean": 0.0073988970588236835,
+      "importance_std": 0.0008821090614224228
+    },
+    {
+      "feature": "cash_balance",
+      "importance_mean": 0.0046511182598040655,
+      "importance_std": 0.0010746911904213957
+    },
+    {
+      "feature": "revenue_cover",
+      "importance_mean": 0.0037412556168301856,
+      "importance_std": 0.0009604823863641741
+    },
+    {
+      "feature": "cac",
+      "importance_mean": 0.0037326388888889728,
+      "importance_std": 0.0013359622097651978
+    },
+    {
+      "feature": "ltv",
+      "importance_mean": 0.001507289113562149,
+      "importance_std": 0.00030795021499168123
+    },
+    {
+      "feature": "prior_rounds",
+      "importance_mean": 0.0011916615604575576,
+      "importance_std": 0.0010629158790740377
+    },
+    {
+      "feature": "total_funding_raised",
+      "importance_mean": 0.0010177313112746055,
+      "importance_std": 0.001048243672286123
+    },
+    {
+      "feature": "sector",
+      "importance_mean": 0.00033573325163409605,
+      "importance_std": 0.0008006617716249153
+    },
+    {
+      "feature": "is_profitable",
+      "importance_mean": -4.787071078293792e-06,
+      "importance_std": 2.7248486272115345e-05
+    },
+    {
+      "feature": "months_operating",
+      "importance_mean": -2.489276960773168e-05,
+      "importance_std": 0.00042478056624893146
+    },
+    {
+      "feature": "net_burn",
+      "importance_mean": -5.5849162581611544e-05,
+      "importance_std": 0.0002323973870013554
+    },
+    {
+      "feature": "stage",
+      "importance_mean": -8.457158905215146e-05,
+      "importance_std": 0.0002612783998813956
+    },
+    {
+      "feature": "team_size",
+      "importance_mean": -0.00010403901143780647,
+      "importance_std": 0.0002901760176594993
+    },
+    {
+      "feature": "monthly_burn",
+      "importance_mean": -0.00024286407271227882,
+      "importance_std": 0.00031240406133808317
+    },
+    {
+      "feature": "gross_margin_pct",
+      "importance_mean": -0.00034786049836592613,
+      "importance_std": 0.0003237906997776296
+    },
+    {
+      "feature": "burn_per_head",
+      "importance_mean": -0.00043179381127440576,
+      "importance_std": 0.0001908477690208697
+    },
+    {
+      "feature": "mrr",
+      "importance_mean": -0.0007946537990194847,
+      "importance_std": 0.000915474691407042
+    },
+    {
+      "feature": "burn_multiple",
+      "importance_mean": -0.0008597579656862032,
+      "importance_std": 0.00030860569044919705
+    }
+  ],
+  "calibration_points": [
+    {
+      "predicted": 0.0,
+      "observed": 0.0
+    },
+    {
+      "predicted": 0.017953065290929653,
+      "observed": 0.009523809523809525
+    },
+    {
+      "predicted": 0.08747803466108937,
+      "observed": 0.07692307692307693
+    },
+    {
+      "predicted": 0.20736123847154983,
+      "observed": 0.2231404958677686
+    },
+    {
+      "predicted": 0.3123686380693461,
+      "observed": 0.3445378151260504
+    },
+    {
+      "predicted": 0.43958985463573974,
+      "observed": 0.325
+    },
+    {
+      "predicted": 0.5779105271409251,
+      "observed": 0.5333333333333333
+    },
+    {
+      "predicted": 0.752923798027564,
+      "observed": 0.7867647058823529
+    },
+    {
+      "predicted": 0.9228117000984207,
+      "observed": 0.9230769230769231
+    }
+  ],
+  "cv_table": [
+    {
+      "Model": "Logistic Regression",
+      "ROC-AUC": "0.891 \u00b1 0.005",
+      "PR-AUC": "0.782 \u00b1 0.008",
+      "F1": "0.716 \u00b1 0.014",
+      "RECALL": "0.829 \u00b1 0.010",
+      "BRIER": "0.138 \u00b1 0.006"
+    },
+    {
+      "Model": "Random Forest",
+      "ROC-AUC": "0.879 \u00b1 0.004",
+      "PR-AUC": "0.758 \u00b1 0.020",
+      "F1": "0.709 \u00b1 0.008",
+      "RECALL": "0.781 \u00b1 0.009",
+      "BRIER": "0.142 \u00b1 0.003"
+    },
+    {
+      "Model": "HistGradientBoosting",
+      "ROC-AUC": "0.874 \u00b1 0.005",
+      "PR-AUC": "0.745 \u00b1 0.011",
+      "F1": "0.679 \u00b1 0.013",
+      "RECALL": "0.661 \u00b1 0.015",
+      "BRIER": "0.138 \u00b1 0.004"
     }
   ],
   "limitations": [

@@ -44,6 +44,15 @@ MODEL_PATH = ROOT / "models" / "model.joblib"
 METRICS_PATH = ROOT / "models" / "metrics.json"
 REPORTS_DIR = ROOT / "reports"
 TARGET = "failed_within_24m"
+PEER_COLUMNS = [
+    "sector",
+    "stage",
+    "runway_months",
+    "mrr_growth_pct",
+    "monthly_churn_pct",
+    "ltv_cac_ratio",
+    "burn_multiple",
+]
 NUMERIC_FEATURES = NUM_RAW + ENGINEERED
 SIMPLICITY_ORDER = {
     "Logistic Regression": 0,
@@ -406,6 +415,7 @@ def train_and_evaluate(
             ]
             for column in NUMERIC_FEATURES
         },
+        "peer_data": engineered.loc[X_train.index, PEER_COLUMNS].reset_index(drop=True),
         "synthetic_data": True,
         "random_seed": seed,
     }
@@ -442,6 +452,12 @@ def train_and_evaluate(
         },
         "test_metrics": test_metrics,
         "top_permutation_importance": importance.head(20).to_dict(orient="records"),
+        "permutation_importance": importance.to_dict(orient="records"),
+        "calibration_points": [
+            {"predicted": float(x), "observed": float(y_)}
+            for x, y_ in zip(predicted_rate, observed_rate, strict=False)
+        ],
+        "cv_table": cv_table.to_dict(orient="records"),
         "limitations": [
             "All records and outcomes are SYNTHETIC; these scores do not estimate real-world startup failure rates.",
             "Calibration and test metrics measure fit to the generated labels, not performance on external companies.",
