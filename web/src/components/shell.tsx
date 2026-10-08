@@ -38,7 +38,7 @@ export const NAV: { page: Page; label: string; icon: ReactNode; tour?: string }[
 function Logo() {
   return (
     <div className="flex items-center gap-2.5">
-      <img src="/compass.svg" alt="" className="h-8 w-8" />
+      <img src={`${import.meta.env.BASE_URL}compass.svg`} alt="" className="h-8 w-8" />
       <div className="leading-tight">
         <div className="text-[15px] font-semibold tracking-tight text-fg">Startup Compass</div>
         <div className="text-[11px] text-muted">Survival risk · 24 months</div>
