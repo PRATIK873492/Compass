@@ -1,0 +1,7 @@
+# Standalone workspace root for the web app (kept out of the Replit workspace).
+# Same supply-chain rule as the repo root: packages must be >= 1 day old.
+minimumReleaseAge: 1440
+packages:
+  - "."
+onlyBuiltDependencies:
+  - esbuild

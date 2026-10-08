@@ -1,0 +1,20 @@
+# Static deploy of the web app. Uses hash routing, so no SPA redirect is needed,
+# and /api requests 404 here, which makes the app switch to its in-browser engine.
+[build]
+  base = "web"
+  command = "npx pnpm@10.33.0 install --frozen-lockfile && npx pnpm@10.33.0 build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

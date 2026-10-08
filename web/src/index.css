@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius-card: 16px;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-teal: #14b8a6;
+  --color-indigo: #6366f1;
+  --color-low: var(--low);
+  --color-medium: var(--medium);
+  --color-high: var(--high);
+}
+
+/* Light mode */
+:root {
+  --bg: #f4f6fb;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-2: #ffffff;
+  --border: rgba(15, 23, 42, 0.1);
+  --fg: #0f172a;
+  --muted: #475569;
+  --low: #15803d;
+  --medium: #b45309;
+  --high: #dc2626;
+  --grid: rgba(15, 23, 42, 0.08);
+  --glow: rgba(20, 184, 166, 0.18);
+  color-scheme: light;
+}
+
+/* Dark mode (default) */
+.dark {
+  --bg: #0a101c;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: #121a2b;
+  --border: rgba(148, 163, 184, 0.16);
+  --fg: #e6edf7;
+  --muted: #94a3b8;
+  --low: #34d399;
+  --medium: #fbbf24;
+  --high: #f87171;
+  --grid: rgba(148, 163, 184, 0.12);
+  --glow: rgba(20, 184, 166, 0.28);
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(20, 184, 166, 0.1), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+.glow {
+  box-shadow: 0 0 0 1px rgba(20, 184, 166, 0.25), 0 8px 40px -12px var(--glow);
+}
+
+.accent-gradient {
+  background-image: linear-gradient(135deg, #14b8a6 0%, #6366f1 100%);
+}
+
+.accent-text {
+  background-image: linear-gradient(135deg, #2dd4bf 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface) 0%, var(--border) 50%, var(--surface) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Recharts tooltip and axis tuning */
+.recharts-cartesian-axis-tick-value { fill: var(--muted); font-size: 11px; }
+.recharts-cartesian-grid line { stroke: var(--grid); }
+.recharts-tooltip-wrapper { outline: none; }
+
+@media print {
+  .no-print { display: none !important; }
+}

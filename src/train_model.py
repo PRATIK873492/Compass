@@ -27,6 +27,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    roc_curve,
 )
 from sklearn.model_selection import StratifiedKFold, cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
@@ -42,6 +43,7 @@ from src.features import CAT, ENGINEERED, FEATURES, NUM_RAW, Winsorizer, add_fea
 DATA_PATH = ROOT / "data" / "startups_synthetic.csv"
 MODEL_PATH = ROOT / "models" / "model.joblib"
 METRICS_PATH = ROOT / "models" / "metrics.json"
+FALLBACK_PATH = ROOT / "models" / "fallback_model.json"
 REPORTS_DIR = ROOT / "reports"
 TARGET = "failed_within_24m"
 PEER_COLUMNS = [
@@ -52,6 +54,8 @@ PEER_COLUMNS = [
     "monthly_churn_pct",
     "ltv_cac_ratio",
     "burn_multiple",
+    "net_burn",
+    "mrr",
 ]
 NUMERIC_FEATURES = NUM_RAW + ENGINEERED
 SIMPLICITY_ORDER = {
@@ -277,6 +281,56 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
+def _roc_points(y_true: np.ndarray, scores: np.ndarray, max_points: int = 60) -> dict[str, list[float]]:
+    fpr, tpr, _ = roc_curve(y_true, scores)
+    keep = np.unique(np.linspace(0, len(fpr) - 1, min(max_points, len(fpr))).round().astype(int))
+    return {"fpr": [float(v) for v in fpr[keep]], "tpr": [float(v) for v in tpr[keep]]}
+
+
+def _export_fallback(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    raw_test: pd.DataFrame,
+    seed: int,
+) -> dict[str, Any]:
+    """Fit a plain logistic regression on the same features and export it as JSON.
+
+    The web client uses it when the API is unreachable. It is uncalibrated and
+    unweighted, so its probabilities are on the training base rate.
+    """
+    pipe = build_pipeline(LogisticRegression(max_iter=2000, random_state=seed)).fit(X_train, y_train)
+    wins, pre, clf = pipe.named_steps["winsorizer"], pipe.named_steps["preprocessor"], pipe.named_steps["classifier"]
+    num = pre.named_transformers_["numeric"]
+    imputer, scaler = num.named_steps["imputer"], num.named_steps["scaler"]
+    onehot = pre.named_transformers_["categorical"]
+    indicator_cols = [NUMERIC_FEATURES[i] for i in imputer.indicator_.features_] if imputer.indicator_ is not None else []
+    model = {
+        "numeric_features": NUMERIC_FEATURES,
+        "categorical_features": CAT,
+        "winsor_lower": [float(wins.lower_bounds_[c]) for c in NUMERIC_FEATURES],
+        "winsor_upper": [float(wins.upper_bounds_[c]) for c in NUMERIC_FEATURES],
+        "impute_median": [float(v) for v in imputer.statistics_],
+        "indicator_features": indicator_cols,
+        "scaler_mean": [float(v) for v in scaler.mean_],
+        "scaler_scale": [float(v) for v in scaler.scale_],
+        "categories": {c: [str(v) for v in cats] for c, cats in zip(CAT, onehot.categories_)},
+        "coef": [float(v) for v in clf.coef_[0]],
+        "intercept": float(clf.intercept_[0]),
+    }
+    probs = pipe.predict_proba(X_test)[:, 1]
+    model["test_roc_auc"] = float(roc_auc_score(y_test, probs))
+    fixture_rows = raw_test.head(12)
+    model["fixtures"] = [
+        {"input": {k: (None if pd.isna(v) else (v.item() if hasattr(v, "item") else v))
+                   for k, v in row[CAT + NUM_RAW].items()},
+         "probability": float(p)}
+        for (_, row), p in zip(fixture_rows.iterrows(), pipe.predict_proba(X_test.head(12))[:, 1])
+    ]
+    return model
+
+
 def train_and_evaluate(
     data_path: Path = DATA_PATH,
     seed: int = 42,
@@ -303,12 +357,14 @@ def train_and_evaluate(
         "roc_auc": "roc_auc",
         "pr_auc": "average_precision",
         "f1": "f1",
+        "precision": "precision",
         "recall": "recall",
         "brier": "neg_brier_score",
     }
     folds = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     cv_results: dict[str, dict[str, float]] = {}
     table_rows: list[dict[str, str]] = []
+    roc_curves: dict[str, dict[str, list[float]]] = {}
 
     for name, classifier in _candidate_models(seed).items():
         scores = cross_validate(
@@ -319,11 +375,18 @@ def train_and_evaluate(
             cv=folds,
             n_jobs=1,
             return_train_score=False,
+            return_estimator=True,
+            return_indices=True,
             error_score="raise",
         )
+        # Out-of-fold probabilities from the same fitted fold models (no refit).
+        oof = np.zeros(len(X_train))
+        for estimator, test_idx in zip(scores["estimator"], scores["indices"]["test"]):
+            oof[test_idx] = estimator.predict_proba(X_train.iloc[test_idx])[:, 1]
+        roc_curves[name] = _roc_points(y_train.to_numpy(), oof)
         summary: dict[str, float] = {}
         row: dict[str, str] = {"Model": name}
-        for metric in ["roc_auc", "pr_auc", "f1", "recall", "brier"]:
+        for metric in ["roc_auc", "pr_auc", "f1", "precision", "recall", "brier"]:
             fold_values = scores[f"test_{metric}"]
             if metric == "brier":
                 mean_value = -float(np.mean(fold_values))
@@ -338,7 +401,7 @@ def train_and_evaluate(
 
     cv_table = pd.DataFrame(
         table_rows,
-        columns=["Model", "ROC-AUC", "PR-AUC", "F1", "RECALL", "BRIER"],
+        columns=["Model", "ROC-AUC", "PR-AUC", "F1", "PRECISION", "RECALL", "BRIER"],
     )
     model_name, selection_explanation = _choose_model(cv_results)
 
@@ -387,6 +450,11 @@ def train_and_evaluate(
         n_bins=10,
         strategy="quantile",
     )
+    # Display-only comparison: the same selected pipeline without calibration.
+    uncalibrated = build_pipeline(_candidate_models(seed)[model_name]).fit(X_train, y_train)
+    raw_probabilities = uncalibrated.predict_proba(X_test)[:, 1]
+    raw_observed, raw_predicted = calibration_curve(y_test, raw_probabilities, n_bins=10, strategy="quantile")
+    fallback = _export_fallback(X_train, y_train, X_test, y_test, data.loc[X_test.index], seed)
     _save_calibration_png(REPORTS_DIR / "calibration_curve.png", predicted_rate, observed_rate)
     _save_importance_png(REPORTS_DIR / "permutation_importance.png", importance)
     importance.to_csv(REPORTS_DIR / "permutation_importance.csv", index=False)
@@ -457,6 +525,13 @@ def train_and_evaluate(
             {"predicted": float(x), "observed": float(y_)}
             for x, y_ in zip(predicted_rate, observed_rate, strict=False)
         ],
+        "calibration_before": [
+            {"predicted": float(x), "observed": float(y_)}
+            for x, y_ in zip(raw_predicted, raw_observed, strict=False)
+        ],
+        "brier_before_calibration": float(brier_score_loss(y_test, raw_probabilities)),
+        "roc_curves_cv": roc_curves,
+        "fallback_model": fallback,
         "cv_table": cv_table.to_dict(orient="records"),
         "limitations": [
             "All records and outcomes are SYNTHETIC; these scores do not estimate real-world startup failure rates.",

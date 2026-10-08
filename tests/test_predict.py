@@ -129,7 +129,7 @@ def test_apply_levers_keeps_unit_economics_consistent():
 
 def test_action_plan_sorted_and_real():
     plan = B.action_plan(NORMAL)
-    assert len(plan) == 5
+    assert len(plan) == 6
     changes = [p["risk_change_pp"] for p in plan]
     assert changes == sorted(changes)
     assert any(abs(c) > 0.1 for c in changes)

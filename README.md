@@ -126,7 +126,7 @@ Retention + 0.15 Traction - 15 x probability, 0, 100).
   churn while rescaling LTV by old/new churn so the unit economics stay
   consistent.
 - **Action plan:** cut burn 15%, cut churn 30%, add 3 points of growth, cut CAC
-  20%, add 6 months of burn to cash. Each one is re-run through the model and
+  20%, raise prices 10%, add 6 months of burn to cash. Each one is re-run through the model and
   sorted by risk change. These are model estimates, not guaranteed outcomes.
 - **Runway forecast:** cash_t = cash - net_burn x t at a constant (conservative)
   net burn, for the current plan and the best action. The cash-out month is the

@@ -28,9 +28,19 @@ def apply_levers(
     churn_pct: float = 0,
     growth_pts: float = 0,
     cac_pct: float = 0,
+    price_pct: float = 0,
 ) -> dict[str, Any]:
-    """Return a modified copy. Churn scaling also rescales LTV by old/new churn."""
+    """Return a modified copy. Churn scaling also rescales LTV by old/new churn.
+
+    price_pct raises ARPU: MRR and LTV scale by (1 + price_pct/100), holding
+    customer count and churn constant (no demand response is modelled).
+    """
     out = dict(d)
+    if price_pct:
+        factor = 1 + price_pct / 100
+        out["mrr"] = _clip("mrr", d["mrr"] * factor)
+        if _has(d.get("ltv")):
+            out["ltv"] = d["ltv"] * factor
     out["monthly_burn"] = _clip("monthly_burn", d["monthly_burn"] * (1 + burn_pct / 100))
     out["mrr_growth_pct"] = _clip("mrr_growth_pct", d["mrr_growth_pct"] + growth_pts)
     if _has(d.get("cac")):
@@ -39,8 +49,8 @@ def apply_levers(
     if _has(old) and churn_pct:
         new = _clip("monthly_churn_pct", old * (1 + churn_pct / 100))
         out["monthly_churn_pct"] = new
-        if _has(d.get("ltv")) and old > 0 and new > 0:
-            out["ltv"] = d["ltv"] * old / new
+        if _has(out.get("ltv")) and old > 0 and new > 0:
+            out["ltv"] = out["ltv"] * old / new
     return out
 
 
@@ -74,6 +84,8 @@ def action_scenarios(clean: dict[str, Any]) -> list[tuple[str, str, dict[str, An
         ("Cut churn 30%", "Lower monthly churn by 30%; LTV rises in proportion.", apply_levers(clean, churn_pct=-30)),
         ("Grow MRR 3 pts faster", "Add 3 points to month-on-month MRR growth.", apply_levers(clean, growth_pts=3)),
         ("Cut CAC 20%", "Lower customer acquisition cost by 20%.", apply_levers(clean, cac_pct=-20)),
+        ("Raise prices 10%", "ARPU +10% with churn held constant (no demand response modelled).",
+         apply_levers(clean, price_pct=10)),
         ("Add 6 months of burn to cash", "Raise or bridge 6 x monthly burn in new cash.", more_cash),
     ]
     if not _has(clean.get("monthly_churn_pct")):
@@ -84,7 +96,7 @@ def action_scenarios(clean: dict[str, Any]) -> list[tuple[str, str, dict[str, An
 
 
 def action_plan(d: dict[str, Any]) -> list[dict[str, Any]]:
-    """Five standard actions, each re-run through the model, sorted by risk reduction."""
+    """Six standard actions, each re-run through the model, sorted by risk reduction."""
     clean, errors = validate_input(d)
     if errors:
         raise ValueError("; ".join(errors))
